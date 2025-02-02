@@ -1,5 +1,5 @@
 import streamlit as st
-import pandas
+import pandas as pd
 import pymysql
 
 st.title("Expense Tracker")
@@ -28,40 +28,43 @@ option = st.selectbox(
 st.write("You selected:", option)
 
 if option == "The Total amount invested during the year":
-    sql = "SELECT SUM(Amount) As A FROM expense WHERE Category = 'Investement'"
+    sql = "SELECT SUM(Amount) As Amount FROM expense WHERE Category = 'Investement'"
 elif option == "The Total Cashback recieved for the year":
-    sql = "SELECT SUM(Cashback) FROM expense"
+    sql = "SELECT SUM(Cashback) As Amount FROM expense"
 elif option == "Amount spent in Vacations using Credit Card":
-    sql = "SELECT SUM(Amount) FROM expense where category = 'Vacation' AND Payment_Mode = 'OnlineCC' "
+    sql = "SELECT SUM(Amount) As Amount FROM expense where category = 'Vacation' AND Payment_Mode = 'OnlineCC' "
 elif option == "No. of transactions using UPI payment mode across different categories":
-    sql = "SELECT Category, COUNT(*) FROM expense WHERE Payment_Mode ='UPI' GROUP BY Category"
+    sql = "SELECT Category As Category, COUNT(*) As Count_UPI FROM expense WHERE Payment_Mode ='UPI' GROUP BY Category ORDER BY COUNT(*) DESC "
 elif option == "Total Amount Spent across different categories using Credit Card":
-    sql = "SELECT Category, SUM(Amount) FROM expense where Payment_Mode = 'OnlineCC' GROUP BY Category"
+    sql = "SELECT Category As Category, SUM(Amount) As Amount FROM expense where Payment_Mode = 'OnlineCC' GROUP BY Category ORDER BY SUM(Amount) DESC"
 elif option == "The amount spent across different Categories":
-    sql = "SELECT Category, SUM(Amount) FROM expense GROUP BY Category"
+    sql = "SELECT Category, SUM(Amount) As Amount FROM expense GROUP BY Category ORDER BY SUM(Amount) DESC"
 elif option == "Month wise expense on groceries":
-    sql = "SELECT SUM(Amount), MONTH(Date) from expense where category = 'Groceries' GROUP BY MONTH(Date)"
+    sql = "SELECT SUM(Amount) As Amount, MONTH(Date) As Month from expense where category = 'Groceries' GROUP BY MONTH(Date) ORDER BY MONTH"
 elif option == "Month wise expense across all categories":
-    sql = " SELECT SUM(Amount), MONTH(Date) from expense GROUP BY MONTH(Date)"
+    sql = " SELECT SUM(Amount) As Amount, MONTH(Date) As Month from expense GROUP BY MONTH(Date) ORDER BY MONTH"
 elif option == "The highest amount on a single transaction during the year":
-    sql = " SELECT Category, max(Amount) from expense GROUP BY Category"
+    sql = " SELECT Category, max(Amount) from expense GROUP BY Category ORDER BY max(Amount) DESC"
 elif option == "Total expenses of the year":
-    sql = " SELECT SUM(Amount) from expense"
+    sql = " SELECT SUM(Amount) As Amount from expense"
 elif option == "Expense incurred in the month of Jan":
-    sql = "SELECT SUM(Amount) from expense WHERE MONTH(Date) = 1 "
+    sql = "SELECT SUM(Amount) As Amount from expense WHERE MONTH(Date) = 1 "
 elif option == "Month wise expense on bill":
-    sql = "SELECT SUM(Amount), MONTH(Date) from expense where category = 'Bill' GROUP BY MONTH(Date)"
+    sql = "SELECT SUM(Amount) As Amount, MONTH(Date) As Month from expense where category = 'Bill' GROUP BY MONTH(Date) ORDER BY MONTH"
 elif option == "Month wise expense on Stationary":
-    sql = "SELECT SUM(Amount), MONTH(Date) from expense where category = 'Stationary' GROUP BY MONTH(Date)"
+    sql = "SELECT SUM(Amount) As Amount, MONTH(Date) As Month from expense where category = 'Stationary' GROUP BY MONTH(Date) ORDER BY MONTH"
 elif option == "Month wise cashback Amount":
-    sql = "SELECT MONTH(Date), SUM(Cashback) from expense GROUP BY MONTH(Date)"
+    sql = "SELECT MONTH(Date) As Month, SUM(Cashback) As Cashback from expense GROUP BY MONTH(Date) ORDER BY MONTH"
 elif option == "No. of Transactions on different Payment Mode":
-    sql = "SELECT Payment_mode, COUNT(*) from expense GROUP BY Payment_Mode"
+    sql = "SELECT Payment_mode, COUNT(*) As Count_Transaction from expense GROUP BY Payment_Mode"
 elif option == "No. of transactions using different payment modes across all categories":
-    sql = "SELECT Category, Payment_Mode , COUNT(*)  FROM expense_database.expense GROUP BY Category, Payment_Mode"
+    sql = "SELECT Category, Payment_Mode , COUNT(*) As Count_Transaction  FROM expense_database.expense GROUP BY Category, Payment_Mode ORDER BY Category"
 
 
 with mydb.cursor() as mycursor:
     mycursor.execute(sql)
     result = mycursor.fetchall()
-st.dataframe(result)
+    df = pd.DataFrame(result, columns=[desc[0] for desc in mycursor.description])
+    mycursor.close()
+    mydb.close()
+st.dataframe(df, width=600)
